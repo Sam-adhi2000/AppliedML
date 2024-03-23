@@ -194,7 +194,7 @@ def test_docker():
     # assert response.status_code == 200
     # assert response.text == "1"
     # Check the status code
-    assert(response.status_code, 2001)
+    assert(response.status_code, 200)
 
     # Parse the response JSON
     response_json = response.json()
