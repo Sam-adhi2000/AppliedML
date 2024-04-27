@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predictive Maintenance</title>
+</head>
+<body>
+    <h1>Predictive Maintenance</h1>
+    
+    <!-- Form for input parameters -->
+    <form id="predictionForm">
+        <label for="type">Type:</label>
+        <input type="text" id="type" name="type" required><br><br>
+        
+        <label for="air_temp">Air Temperature [K]:</label>
+        <input type="number" id="air_temp" name="air_temp" step="any" required><br><br>
+        
+        <label for="process_temp">Process Temperature [K]:</label>
+        <input type="number" id="process_temp" name="process_temp" step="any" required><br><br>
+        
+        <label for="rotational_speed">Rotational Speed [rpm]:</label>
+        <input type="number" id="rotational_speed" name="rotational_speed" step="any" required><br><br>
+        
+        <label for="torque">Torque [Nm]:</label>
+        <input type="number" id="torque" name="torque" step="any" required><br><br>
+        
+        <label for="tool_wear">Tool Wear [min]:</label>
+        <input type="number" id="tool_wear" name="tool_wear" step="any" required><br><br>
+        
+        <button type="submit">Predict</button>
+    </form>
+
+    <!-- Placeholder for displaying predictions -->
+    <div id="predictions"></div>
+
+    <!-- JavaScript to handle form submission -->
+    <script>
+        document.getElementById('predictionForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent form submission
+            const formData = new FormData(this); // Get form data
+    
+            // Convert form data to plain object for logging
+            const formDataObject = Object.fromEntries(formData);
+            console.log('Form Data:', formDataObject); // Log form data for debugging
+    
+            // Send fetch request to Flask endpoint
+            fetch('/predict', {
+                method: 'POST',
+                body: JSON.stringify(formDataObject), // Convert form data to JSON
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Log the entire JSON response for debugging
+                console.log('JSON Response:', data);
+    
+                // Handle JSON response
+                if (data.error) {
+                    // Handle error
+                    console.error('Error:', data.error);
+                } else {
+                    // Update HTML with predictions
+                    document.getElementById('predictions').innerHTML = `
+                        <p>Failure Risk Forecast: ${data['binary_prediction']}</p>
+                        <p>Fault Type Prediction: ${data['multi_prediction']}</p>
+                    `;
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+    
+    
+
+</body>
+</html>

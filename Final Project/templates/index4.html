@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predictive Maintenance</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: 'Roboto', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        h1 {
+            background-color: rgb(180, 32, 180);
+            padding: 20px;
+            color: white;
+            margin-bottom: 20px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        form {
+            flex: 1;
+            margin-right: 20px;
+            max-width: 50%;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        button[type="submit"] {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: none;
+            background-color: purple;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            background-color: white;
+            color: black;
+            padding: 8px;
+            border-radius: 5px;
+            border: none;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #6a1b9a;
+        }
+
+        #predictions {
+            flex: 1;
+            max-width: 50%;
+            padding: 20px;
+            border: 1px solid white;
+            text-align: center;
+            font-size: 18px;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        p {
+            margin-bottom: 10px;
+        }
+
+        #failureImage {
+            max-width: 70%; /* Adjust image size */
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                align-items: center;
+            }
+            form, #predictions {
+                width: 100%;
+                max-width: unset;
+            }
+            form {
+                margin-right: 0;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Predictive Maintenance</h1>
+    
+    <!-- Container for input form fields and predictions -->
+    <div class="container">
+        <!-- Form for input parameters -->
+        <form id="predictionForm">
+            <label for="type">Type:</label>
+            <input type="text" id="type" name="type" required><br>
+            
+            <label for="air_temp">Air Temperature [K]:</label>
+            <input type="number" id="air_temp" name="air_temp" step="any" required><br>
+            
+            <label for="process_temp">Process Temperature [K]:</label>
+            <input type="number" id="process_temp" name="process_temp" step="any" required><br>
+            
+            <label for="rotational_speed">Rotational Speed [rpm]:</label>
+            <input type="number" id="rotational_speed" name="rotational_speed" step="any" required><br>
+            
+            <label for="torque">Torque [Nm]:</label>
+            <input type="number" id="torque" name="torque" step="any" required><br>
+            
+            <label for="tool_wear">Tool Wear [min]:</label>
+            <input type="number" id="tool_wear" name="tool_wear" step="any" required><br>
+            
+            <button type="submit">Predict</button>
+        </form>
+
+        <!-- Placeholder for displaying predictions -->
+        <div id="predictions"></div>
+    </div>
+
+    <!-- JavaScript to handle form submission -->
+    <script>
+        document.getElementById('predictionForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent form submission
+            const formData = new FormData(this); // Get form data
+    
+            // Send fetch request to Flask endpoint
+            fetch('/predict', {
+                method: 'POST',
+                body: JSON.stringify(Object.fromEntries(formData)), // Convert form data to JSON
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle JSON response
+                if (data.error) {
+                    console.error('Error:', data.error);
+                } else {
+                    // Update HTML with predictions
+                    const predictionsDiv = document.getElementById('predictions');
+                    predictionsDiv.innerHTML = `
+                        
+                        <p>Failure Risk Forecast: ${data['binary_prediction']}</p>
+                        <p>Fault Type Prediction: ${data['multi_prediction']}</p>
+                        <img id="failureImage" src="${data['binary_prediction'] === 'Failure' ? 'https://media.istockphoto.com/id/1186939095/vector/document-error-icon-in-flat-style-broken-report-vector-illustration-on-white-isolated.jpg?s=612x612&w=0&k=20&c=wWuI_040DliyxJ8fntNWgGZQH-Uigr5I4TMgzBZ9e_w=' : 'https://st2.depositphotos.com/18270392/50933/v/450/depositphotos_509338862-stock-illustration-green-tick-icon-vector-symbol.jpg'}" alt="Failure Image">
+                        <p>${data['binary_prediction'] === 'Failure' ? 'Oops! Time for a checkup' : 'Machine is in good health :D'}</p>
+                    `;
+                    // Set image source based on binary_prediction value
+                    const failureImage = document.getElementById('failureImage');
+                    failureImage.style.maxWidth = '70%'; // Adjust image size
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+    
+</body>
+</html>

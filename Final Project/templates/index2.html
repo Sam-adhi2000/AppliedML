@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predictive Maintenance</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: 'Roboto', sans-serif; /* Use Roboto font */
+            text-align: center;
+        }
+        h1 {
+            background-color: rgb(180, 32, 180);
+            padding: 20px;
+            color: white;
+        }
+        form {
+            margin: 20px auto;
+            max-width: 400px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+        input[type="text"],
+        input[type="number"],
+        button[type="submit"] {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: none;
+            background-color: purple;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        input[type="text"],
+        input[type="number"] {
+            background-color: white;
+            color: black;
+            padding: 8px;
+            border-radius: 5px;
+            border: none;
+        }
+        button[type="submit"]:hover {
+            background-color: #6a1b9a;
+        }
+        #predictions {
+            margin-top: 40px; /* Increase top margin for more space */
+            padding: 20px; /* Increase padding for more space */
+            border: 1px solid white;
+            text-align: center; /* Center align the text content */
+            font-size: 18px; /* Increase font size */
+            line-height: 1.6; /* Increase line height for better readability */
+        }
+        p {
+            margin-bottom: 10px; /* Increase margin between paragraphs */
+        }
+    </style>
+</head>
+<body>
+    <h1>Predictive Maintenance</h1>
+    
+    <!-- Form for input parameters -->
+    <form id="predictionForm">
+        <label for="type">Type:</label>
+        <input type="text" id="type" name="type" required><br>
+        
+        <label for="air_temp">Air Temperature [K]:</label>
+        <input type="number" id="air_temp" name="air_temp" step="any" required><br>
+        
+        <label for="process_temp">Process Temperature [K]:</label>
+        <input type="number" id="process_temp" name="process_temp" step="any" required><br>
+        
+        <label for="rotational_speed">Rotational Speed [rpm]:</label>
+        <input type="number" id="rotational_speed" name="rotational_speed" step="any" required><br>
+        
+        <label for="torque">Torque [Nm]:</label>
+        <input type="number" id="torque" name="torque" step="any" required><br>
+        
+        <label for="tool_wear">Tool Wear [min]:</label>
+        <input type="number" id="tool_wear" name="tool_wear" step="any" required><br>
+        
+        <button type="submit">Predict</button>
+    </form>
+
+    <!-- Placeholder for displaying predictions -->
+    <div id="predictions"></div>
+
+    <!-- JavaScript to handle form submission -->
+    <script>
+        document.getElementById('predictionForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent form submission
+            const formData = new FormData(this); // Get form data
+    
+            // Convert form data to plain object for logging
+            const formDataObject = Object.fromEntries(formData);
+            console.log('Form Data:', formDataObject); // Log form data for debugging
+    
+            // Send fetch request to Flask endpoint
+            fetch('/predict', {
+                method: 'POST',
+                body: JSON.stringify(formDataObject), // Convert form data to JSON
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Log the entire JSON response for debugging
+                console.log('JSON Response:', data);
+    
+                // Handle JSON response
+                if (data.error) {
+                    // Handle error
+                    console.error('Error:', data.error);
+                } else {
+                    // Update HTML with predictions
+                    document.getElementById('predictions').innerHTML = `
+                        <p>Failure Risk Forecast: ${data['binary_prediction']}</p>
+                        <p>Fault Type Prediction: ${data['multi_prediction']}</p>
+                    `;
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+    
+</body>
+</html>
